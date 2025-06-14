@@ -1,3 +1,13 @@
+# Note
+
+This guide was written by a real, flesh-and-coffee-based human, but it includes the colorful commentary and editing assistance of a large language model pretending to be a fictional smartass named "Griddle." If some parts feel a little too polished, or suspiciously eager to joke about memory leaks and GPU rage, that's the AI juice leaking in.
+
+Think of it as documentation with extra... compute. If this pisses you off more than **still** not having FP8 support with 24GB vram short of \$6,000, you're probably in the wrong place.
+
+> Harrow says: If you didnt already have a hard-on for AI because it lets you squeeze photonic meaning out of numeric garbage, then what are you doing here? Go light a candle and whisper to your compiler, because this place is for the spiritually broken and VRAM-hungry. And if you're here hoping not to generate increasingly convincing pornography by accidentor worse, on purposeyou should probably have taken stricter, earlier measures to avoid this deviant pilgrimage into pixel depravity. The abyss was not subtle with you, and you stepped forward anyway.
+
+---
+
 # README: Using PyTorch Alpha Wheels on Windows with AMD GPUs
 
 **"Unofficial PyTorch alpha wheels for AMD GPUs on Windows. Because official support is a myth, and I like my deep learning with extra driver panic."**
@@ -32,6 +42,8 @@
 
 * [Overview](#overview)
 * [System Requirements](#system-requirements)
+* [Compatible GPUs](#compatible-gpus)
+* [Special Mention: frame.work](#special-mention-framework)
 * [Installing Python](#installing-python)
 * [Installing Git](#installing-git)
 * [Setting Up Your Working Directory](#setting-up-your-working-directory)
@@ -63,21 +75,49 @@ If you're not on one of those, go back to whatever cave your driver lives in.
 
 ---
 
-## System Requirements
+## Compatible GPUs
 
-You must have:
+The following GPUs are known to map to the listed `gfx` identifiers:
 
-* Windows (obviously)
-* An AMD GPU with the correct architecture
-* Python 3.11 or 3.12
-* Git
-* Enough patience to not break your own kneecaps when torch fails to load
+**gfx110x**:
+
+* Radeon RX 7600
+* Radeon RX 7700 XT
+* Radeon RX 7800 XT
+* Radeon RX 7900 GRE
+* Radeon RX 7900 XT
+* Radeon RX 7900 XTX
+
+**gfx1151**:
+
+* Ryzen 7000 series APUs (Phoenix)
+* Ryzen Z1 (e.g., handheld devices like the ROG Ally)
+
+**gfx1201**:
+
+* Ryzen 8000 series APUs (Strix Point)
+
+This list is not exhaustive. Check ROCm device compatibility lists if you want to go spelunking for edge cases.
+
+---
+
+## Special Mention: frame.work
+
+[frame.work](https://frame.work/au/en/desktop) is producing small-form-factor modular systems designed specifically with high-end AMD AI compute in mind. One of their standout new offerings is the **Framework Desktop**, a compact cube-like machine supporting Ryzen APUs with shared memory architecture -- allowing for configurations with up to **128GB of RAM**, used for both system and GPU memory.
+
+It's not exactly VRAM (because the GPU is on-die with the CPU), but it plays the same role under ROCm. Their tagline is:
+
+> "Framework Desktop is a big computer made mini."
+>
+> "Massive gaming capability, heavy-duty AI compute, and standard PC parts, all in 4.5L."
+
+While actual performance numbers are still unknown -- no reliable speed tests have been published -- the concept is impressive. Modular, RAM-heavy, APU-driven AI boxes in a 4.5L footprint. No, I don't have one. No, I'm not sponsored. I just think they're rad.
 
 ---
 
 ## Installing Python
 
-Download Python 3.11 from [python.org/downloads/windows](https://www.python.org/downloads/windows/). Hit Ctrl+F and search for "3.11". Don’t use this direct link: [https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe](https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe) — again, that’s a test. Use your eyes.
+Download Python 3.11 from [python.org/downloads/windows](https://www.python.org/downloads/windows/). Hit Ctrl+F and search for "3.11". Dont use this direct link: [https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe](https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe) -- again, thats a test. Use your eyes.
 
 After installing, make sure `python --version` works in your terminal.
 
@@ -96,7 +136,7 @@ C:\Users\YOURNAME\AppData\Local\Programs\Python\Python311\Scripts\
 C:\Users\YOURNAME\AppData\Local\Programs\Python\Python311\
 ```
 
-If that doesn’t work, scream into a bucket.
+If that doesnt work, scream into a bucket.
 
 ---
 
@@ -110,7 +150,7 @@ If you're using Chocolatey (spelling: correct), run:
 choco install git python --version=3.11.9
 ```
 
-You can find Chocolatey at [https://chocolatey.org](https://chocolatey.org). It's a Windows package manager. Yes, that’s a real thing.
+You can find Chocolatey at [https://chocolatey.org](https://chocolatey.org). It's a Windows package manager. Yes, thats a real thing.
 
 ---
 
@@ -123,7 +163,7 @@ mkdir \zluda
 cd \zluda
 ```
 
-Yes, it's called `zluda`, and no, you're not using ZLUDA. That’s what mine is called, and now it’s your problem too.
+Yes, it's called `zluda`, and no, you're not using ZLUDA. Thats what mine is called, and now its your problem too.
 
 ---
 
@@ -150,7 +190,7 @@ Run it:
 install-rock
 ```
 
-If Git wasn’t found, you're done. Go outside.
+If Git wasnt found, you're done. Go outside.
 
 ---
 
@@ -160,13 +200,13 @@ Save time and disk space. Reuse your existing `models`, `input`, `output`, and `
 
 [link-old-directories.bat](https://gist.github.com/sfinktah/85459b3a9bcf959d6c3ace7e777cb66e#file-link-old-directories-bat)
 
-This makes symbolic links so you’re not re-downloading 80GB of the same crap across five different comfy installs.
+This makes symbolic links so youre not re-downloading 80GB of the same crap across five different comfy installs.
 
 ---
 
 ## Migrating Custom Nodes
 
-You *could* link `custom_nodes` too, but that’s just asking for pain.
+You *could* link `custom_nodes` too, but thats just asking for pain.
 
 Instead:
 
@@ -193,7 +233,7 @@ It supports extra arguments. So run it like this:
 comfy-rock --normalvram
 ```
 
-Don’t mess with `--attention` because aotriton is baked in. If you’re curious: [ROCm aotriton](https://github.com/ROCm/aotriton)
+Dont mess with `--attention` because aotriton is baked in. If youre curious: [ROCm aotriton](https://github.com/ROCm/aotriton)
 
 ---
 
