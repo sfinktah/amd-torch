@@ -146,8 +146,9 @@ Get Git from [git-scm.com/downloads/win](https://git-scm.com/downloads/win). Def
 
 If you're using Chocolatey (spelling: correct), run:
 
-```
-choco install git python --version=3.11.9
+```cmd
+choco install git -y
+choco install python --version=3.11.9 -y
 ```
 
 You can find Chocolatey at [https://chocolatey.org](https://chocolatey.org). It's a Windows package manager. Yes, thats a real thing.
