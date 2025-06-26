@@ -1278,7 +1278,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 151,
+      "order": 154,
       "mode": 0,
       "inputs": [
         {
@@ -1390,7 +1390,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 179,
+      "order": 180,
       "mode": 0,
       "inputs": [
         {
@@ -2178,7 +2178,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 198,
+      "order": 199,
       "mode": 0,
       "inputs": [
         {
@@ -2447,7 +2447,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 199,
+      "order": 200,
       "mode": 0,
       "inputs": [
         {
@@ -6725,10 +6725,10 @@
         }
       ],
       "properties": {
-        "aux_id": "alexopus/ComfyUI-Image-Saver",
+        "cnr_id": "comfyui-image-saver",
         "ver": "1.10.1",
         "Node name for S&R": "Sampler Selector (Image Saver)",
-        "cnr_id": "comfyui-image-saver"
+        "aux_id": "alexopus/ComfyUI-Image-Saver"
       },
       "widgets_values": [
         "euler"
@@ -6764,9 +6764,10 @@
         }
       ],
       "properties": {
-        "aux_id": "alexopus/ComfyUI-Image-Saver",
+        "cnr_id": "comfyui-image-saver",
         "ver": "b92011d56f3f1a7a3ff8345b5f2870326410c1ee",
-        "Node name for S&R": "Scheduler Selector (Comfy) (Image Saver)"
+        "Node name for S&R": "Scheduler Selector (Comfy) (Image Saver)",
+        "aux_id": "alexopus/ComfyUI-Image-Saver"
       },
       "widgets_values": [
         "normal"
@@ -7552,7 +7553,7 @@
         260
       ],
       "flags": {},
-      "order": 152,
+      "order": 155,
       "mode": 0,
       "inputs": [
         {
@@ -7592,47 +7593,6 @@
       ]
     },
     {
-      "id": 249,
-      "type": "LoadImage",
-      "pos": [
-        1160,
-        1020
-      ],
-      "size": [
-        320,
-        326
-      ],
-      "flags": {},
-      "order": 103,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "IMAGE",
-          "type": "IMAGE",
-          "links": [
-            251
-          ]
-        },
-        {
-          "name": "MASK",
-          "type": "MASK",
-          "links": [
-            262
-          ]
-        }
-      ],
-      "properties": {
-        "cnr_id": "comfy-core",
-        "ver": "0.3.30",
-        "Node name for S&R": "LoadImage"
-      },
-      "widgets_values": [
-        "pasted/image (42).png",
-        "image"
-      ]
-    },
-    {
       "id": 248,
       "type": "LanPaint_KSampler",
       "pos": [
@@ -7644,7 +7604,7 @@
         600
       ],
       "flags": {},
-      "order": 191,
+      "order": 193,
       "mode": 0,
       "inputs": [
         {
@@ -7739,7 +7699,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 104,
+      "order": 103,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -7764,7 +7724,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 192,
+      "order": 191,
       "mode": 0,
       "inputs": [
         {
@@ -7802,7 +7762,7 @@
         120
       ],
       "flags": {},
-      "order": 105,
+      "order": 104,
       "mode": 2,
       "inputs": [],
       "outputs": [
@@ -7839,7 +7799,7 @@
         140
       ],
       "flags": {},
-      "order": 106,
+      "order": 105,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -7877,7 +7837,7 @@
         160
       ],
       "flags": {},
-      "order": 107,
+      "order": 106,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -7916,7 +7876,7 @@
         82
       ],
       "flags": {},
-      "order": 108,
+      "order": 107,
       "mode": 2,
       "inputs": [],
       "outputs": [
@@ -7954,7 +7914,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 153,
+      "order": 151,
       "mode": 0,
       "inputs": [
         {
@@ -8098,7 +8058,7 @@
         780
       ],
       "flags": {},
-      "order": 109,
+      "order": 108,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -8124,7 +8084,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 155,
+      "order": 153,
       "mode": 0,
       "inputs": [
         {
@@ -8164,7 +8124,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 154,
+      "order": 152,
       "mode": 2,
       "inputs": [
         {
@@ -8310,7 +8270,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 193,
+      "order": 192,
       "mode": 0,
       "inputs": [
         {
@@ -8352,7 +8312,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 200,
+      "order": 198,
       "mode": 0,
       "inputs": [
         {
@@ -8392,7 +8352,7 @@
       "flags": {
         "collapsed": true
       },
-      "order": 180,
+      "order": 179,
       "mode": 0,
       "inputs": [
         {
@@ -8512,7 +8472,7 @@
         100
       ],
       "flags": {},
-      "order": 110,
+      "order": 109,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -8546,7 +8506,7 @@
         82
       ],
       "flags": {},
-      "order": 111,
+      "order": 110,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -8580,7 +8540,7 @@
         200
       ],
       "flags": {},
-      "order": 112,
+      "order": 111,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -8723,7 +8683,7 @@
         60
       ],
       "flags": {},
-      "order": 113,
+      "order": 112,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -8745,6 +8705,47 @@
       ],
       "color": "#2a363b",
       "bgcolor": "#3f5159"
+    },
+    {
+      "id": 249,
+      "type": "LoadImage",
+      "pos": [
+        1160,
+        1020
+      ],
+      "size": [
+        320,
+        326
+      ],
+      "flags": {},
+      "order": 113,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            251
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            262
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.3.30",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "carly_chaikin_mr_robot.png",
+        "image"
+      ]
     }
   ],
   "links": [
@@ -10290,8 +10291,8 @@
     "ds": {
       "scale": 0.683013455365071,
       "offset": [
-        2733.1097282477785,
-        239.72879912198752
+        2854.63002824778,
+        81.60599912198751
       ]
     },
     "frontendVersion": "1.22.2",
