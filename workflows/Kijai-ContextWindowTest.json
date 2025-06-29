@@ -844,7 +844,7 @@
       "outputs": [],
       "properties": {},
       "widgets_values": [
-        "This is a slightly modified copy of Kijai's **Context window test**\n\n> 1025 frames using window size of 81 frames, with 16 overlap. With the 1.3B T2V model this used under 5GB VRAM and took 10 minutes to gen on a 5090:\n\nWell, we have AMDs that don't do `fp8` and don't really go faster than a 3090, so for my 7900 XTX the results are:\n\n- VRAM: 10.8gb (includes usage by other things)\n- Time Taken: Not finished yet\n- Guess?  `26/30 [43:56<06:39, 99.97s/it]` ... call it 50 minutes.\n\nSo 5 times slower with twice as much memory used, running with `--use-sage-attention --lowvram`, and **maybe** torch.compile.  The only way to be sure is to run it again with compile disabled to compare.\n\n\n\n"
+        "This is a slightly modified copy of Kijai's **Context window test**\n\n> 1025 frames using window size of 81 frames, with 16 overlap. With the 1.3B T2V model this used under 5GB VRAM and took 10 minutes to gen on a 5090:\n\nWell, we have AMDs that don't do `fp8` and don't really go faster than a 3090, so for my 7900 XTX the results are:\n\n- VRAM: 10.8gb (includes usage by other things)\n- Time Taken: Not finished yet\n- Guess?  `26/30 [43:56<06:39, 99.97s/it]` ... call it 50 minutes.\n\nSo 5 times slower with twice as much memory used, running with `--use-sage-attention --lowvram`, and **maybe** torch.compile.  The only way to be sure is to run it again with compile disabled to compare.\n\n**p.s.** it doesn't need an image, so don't worry about there not being one.\n\n\n\n"
       ],
       "color": "#246283",
       "bgcolor": "#3f5159"
@@ -954,8 +954,8 @@
     "ds": {
       "scale": 1.1167815779424792,
       "offset": [
-        384.9649145323571,
-        1126.1973707425295
+        385.86034477561236,
+        1125.3019404992742
       ]
     },
     "node_versions": {
