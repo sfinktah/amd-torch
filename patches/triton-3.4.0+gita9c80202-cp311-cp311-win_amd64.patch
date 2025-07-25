@@ -1,5 +1,5 @@
-diff -ru /tmp/tmp.ykMCQnMYZj/unzipped/triton/backends/amd/compiler.py triton/backends/amd/compiler.py
---- /tmp/tmp.ykMCQnMYZj/unzipped/triton/backends/amd/compiler.py	2025-06-12 03:19:00.000000000 +1000
+diff -ru --ignore-trailing-space /tmp/tmp.ghCYbbdut4/unzipped/triton/backends/amd/compiler.py triton/backends/amd/compiler.py
+--- /tmp/tmp.ghCYbbdut4/unzipped/triton/backends/amd/compiler.py	2025-06-12 03:19:00.000000000 +1000
 +++ triton/backends/amd/compiler.py	2025-07-24 19:15:46.436712800 +1000
 @@ -96,13 +96,21 @@
          return target.backend == 'hip' or target.backend == 'cuda'
@@ -32,8 +32,8 @@ diff -ru /tmp/tmp.ykMCQnMYZj/unzipped/triton/backends/amd/compiler.py triton/bac
          fns[0].add_fn_attr("amdgpu-waves-per-eu", f"{options.waves_per_eu}")
          denormal_mode = "preserve-sign" if options.allow_flush_denorm else "ieee"
          fns[0].add_fn_attr("denormal-fp-math-f32", denormal_mode)
-diff -ru /tmp/tmp.ykMCQnMYZj/unzipped/triton/compiler/compiler.py triton/compiler/compiler.py
---- /tmp/tmp.ykMCQnMYZj/unzipped/triton/compiler/compiler.py	2025-06-12 03:19:00.000000000 +1000
+diff -ru --ignore-trailing-space /tmp/tmp.ghCYbbdut4/unzipped/triton/compiler/compiler.py triton/compiler/compiler.py
+--- /tmp/tmp.ghCYbbdut4/unzipped/triton/compiler/compiler.py	2025-06-12 03:19:00.000000000 +1000
 +++ triton/compiler/compiler.py	2025-07-23 00:49:07.137237400 +1000
 @@ -53,6 +53,8 @@
  
@@ -65,3 +65,98 @@ diff -ru /tmp/tmp.ykMCQnMYZj/unzipped/triton/compiler/compiler.py triton/compile
          self.attrs = attrs or dict()
          if isinstance(self.signature, str):
              self.signature = {k: v.strip() for k, v in enumerate(self.signature.split(","))}
+diff -ru --ignore-trailing-space /tmp/tmp.ghCYbbdut4/unzipped/triton/runtime/build.py triton/runtime/build.py
+--- /tmp/tmp.ghCYbbdut4/unzipped/triton/runtime/build.py	2025-06-12 03:19:00.000000000 +1000
++++ triton/runtime/build.py	2025-07-24 15:30:48.915147500 +1000
+@@ -39,6 +39,9 @@
+         if cc is None:
+             raise RuntimeError(
+                 "Failed to find C compiler. Please specify via CC environment variable or set triton.knobs.build.impl.")
++
++    print("\033[93m%%% Triton is using the compiler '{}'\033[0m".format(cc))
++
+     # This function was renamed and made public in Python 3.10
+     if hasattr(sysconfig, 'get_default_scheme'):
+         scheme = sysconfig.get_default_scheme()
+@@ -57,17 +60,80 @@
+     library_dirs += [ os.path.join(os.environ['HIP_PATH'], 'lib')]
+ 
+     # for -Wno-psabi, see https://gcc.gnu.org/bugzilla/show_bug.cgi?id=111047
+-    cc_cmd = [cc, src, "-O3", "-shared", "-Wno-psabi", "-o", so]
++    cc_cmd = [cc, src, "-O3", "-shared", "-Wno-psabi", "-march=native", "-mtune=native", "-o", so]
+     cc_cmd += [f'-l{lib}' for lib in libraries]
+     cc_cmd += [f"-L{dir}" for dir in library_dirs]
+     cc_cmd += [f"-I{dir}" for dir in include_dirs if dir is not None]
++
++
++    ###
++    # Make a copy of all the temporary files so we can run clang manually to test
++    ###
++    # Copy anything from temp dir into c:\tmp\amd and substitute in printed command
++    temp_root = r"C:\Users\sfink\AppData\Local\Temp\\"
++    tmp_dest_root = "C:\\tmp\\amd\\"
++    os.makedirs(tmp_dest_root, exist_ok=True)
++
++    def map_path(path: str) -> str:
++        rel = os.path.relpath(path, temp_root)
++        return os.path.join(tmp_dest_root, rel)
++
++    def handle_temp_arg(arg: str) -> str:
++        norm_temp_root = os.path.normcase(os.path.normpath(temp_root))
++
++        def is_under_temp(path: str) -> bool:
++            norm_path = os.path.normcase(os.path.normpath(path))
++            return norm_path.startswith(norm_temp_root)
++
++        # Direct path
++        if is_under_temp(arg):
++            dst = map_path(arg)
++            if os.path.exists(arg):
++                os.makedirs(os.path.dirname(dst), exist_ok=True)
++                if os.path.isdir(arg):
++                    shutil.copytree(arg, dst, dirs_exist_ok=True)
++                else:
++                    shutil.copyfile(arg, dst)
++            return dst  # return dst even if the file didn't exist
++
++        # -I or -L prefixes
++        for prefix in ("-I", "-L"):
++            if arg.startswith(prefix):
++                value = arg[len(prefix):]
++                if is_under_temp(value):
++                    dst = map_path(value)
++                    if os.path.exists(value):
++                        os.makedirs(os.path.dirname(dst), exist_ok=True)
++                        if os.path.isdir(value):
++                            shutil.copytree(value, dst, dirs_exist_ok=True)
++                        else:
++                            shutil.copyfile(value, dst)
++                    return prefix + dst  # return substituted dst either way
++
++        return arg
++
++    cmd_for_print = []
++    for arg in cc_cmd:
++        fixed = handle_temp_arg(f"{arg}")
++        quoted = f'"{fixed}"' if ' ' in fixed or fixed.endswith('.exe') else fixed
++        cmd_for_print.append(quoted)
++
++    print("\033[93m%%% [info] triton/runtime/build/_build: {}\033[0m".format(" ".join(cmd_for_print)))
++    file_put_contents_append(tmp_dest_root + "commands.txt", " ".join(cmd_for_print) + "\n")
++
+     subprocess.check_call(cc_cmd, stdout=subprocess.DEVNULL)
+     return so
+ 
++def file_put_contents_append(fn, data):
++    with open(os.path.normpath(fn), 'a') as f:
++        f.write(data)
++    return os.path.abspath(fn)
++
+ 
+ @functools.lru_cache
+ def platform_key() -> str:
+     from platform import machine, system, architecture
++    print("\033[93m%%% [info] triton/runtime/build/platform_key: {}\033[0m".format(",".join([machine(), system(), *architecture()])))
+     return ",".join([machine(), system(), *architecture()])
+ 
+ 
