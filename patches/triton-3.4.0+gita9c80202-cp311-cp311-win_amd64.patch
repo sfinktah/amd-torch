@@ -1,0 +1,67 @@
+diff -ru /tmp/tmp.ykMCQnMYZj/unzipped/triton/backends/amd/compiler.py triton/backends/amd/compiler.py
+--- /tmp/tmp.ykMCQnMYZj/unzipped/triton/backends/amd/compiler.py	2025-06-12 03:19:00.000000000 +1000
++++ triton/backends/amd/compiler.py	2025-07-24 19:15:46.436712800 +1000
+@@ -96,13 +96,21 @@
+         return target.backend == 'hip' or target.backend == 'cuda'
+ 
+     def __init__(self, target: GPUTarget) -> None:
+-        super().__init__(target)
++        # super().__init__(target)
++        triton_arch = os.environ.get('TRITON_OVERRIDE_ARCH')
++        if triton_arch:
++            _hack_target = GPUTarget(backend='hip', arch=triton_arch, warp_size=32)
++            super().__init__(_hack_target)
++        else:
++            super().__init__(target)
+         #assert isinstance(target.arch, str)
+         self.binary_ext = "hsaco"
+ 
+     def get_target_name(self, options) -> str:
+         return f"hip:{options.arch}"
+ 
++    # Should be: %% HIPOptions::parse_options self: GPUTarget(backend='hip', arch='gfx1100', warp_size=32)
++    # Actually : %% HIPOptions::parse_options self: GPUTarget(backend='cuda', arch=88, warp_size=32)
+     def parse_options(self, opts) -> Any:
+         args = {'arch': knobs.runtime.override_arch or self.target.arch}
+ 
+@@ -369,6 +377,7 @@
+         # If <max> is omitted, then there is no restriction on the maximum number of waves per EU other than
+         # the one dictated by the hardware for which the kernel is compiled. Passing 0, 0 as <min>, <max>
+         # implies the default behavior (no limits).
++        print("\033[93m%%% [debug] make_llir: adding llvm option for amdgpu-waves-per-eu={} \033[0m -- triton/backends/amd/compiler.py".format(str(options.waves_per_eu)))
+         fns[0].add_fn_attr("amdgpu-waves-per-eu", f"{options.waves_per_eu}")
+         denormal_mode = "preserve-sign" if options.allow_flush_denorm else "ieee"
+         fns[0].add_fn_attr("denormal-fp-math-f32", denormal_mode)
+diff -ru /tmp/tmp.ykMCQnMYZj/unzipped/triton/compiler/compiler.py triton/compiler/compiler.py
+--- /tmp/tmp.ykMCQnMYZj/unzipped/triton/compiler/compiler.py	2025-06-12 03:19:00.000000000 +1000
++++ triton/compiler/compiler.py	2025-07-23 00:49:07.137237400 +1000
+@@ -53,6 +53,8 @@
+ 
+ class ASTSource:
+ 
++    _warned_constexpr_args = set()
++
+     def __init__(self, fn, signature, constexprs=None, attrs=None) -> None:
+         self.fn = fn
+         self.language = Language.TRITON
+@@ -62,9 +64,17 @@
+         self.constants = dict()
+         if constexprs is not None:
+             for k, v in constexprs.items():
+-                k = (fn.arg_names.index(k), ) if isinstance(k, str) else k
+-                assert isinstance(k, tuple)
+-                self.constants[k] = v
++                if not isinstance(k, str) or k in fn.arg_names:
++                    k = (fn.arg_names.index(k), ) if isinstance(k, str) else k
++                    assert isinstance(k, tuple)
++                    self.constants[k] = v
++                elif isinstance(k, str) and k not in self._warned_constexpr_args:
++                    # see also triton/compiler/compiler.py
++                    # see also torch/_inductor/runtime/triton_heuristics.py
++                    # see also torch/_higher_order_ops/triton_kernel_wrap.py
++                    print(f"\033[93m%%% [fix] ignoring ASTSource::__init__ invalid constexpr: {k}={v}\033[0m -- triton/compiler/compiler.py")
++                    #  print("\033[03m%%% [debug] fn.arg_names: {}\033[0m".format(str(self.fn.arg_names)))
++                    self._warned_constexpr_args.add(k)
+         self.attrs = attrs or dict()
+         if isinstance(self.signature, str):
+             self.signature = {k: v.strip() for k, v in enumerate(self.signature.split(","))}
