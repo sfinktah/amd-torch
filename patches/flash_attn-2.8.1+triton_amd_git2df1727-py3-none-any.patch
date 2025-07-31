@@ -1,0 +1,160 @@
+diff -ru --ignore-trailing-space /tmp/tmp.MDcya55gkZ/unzipped/flash_attn/flash_attn_triton_amd/bwd_prefill_fused_no_atomics.py flash_attn/flash_attn_triton_amd/bwd_prefill_fused_no_atomics.py
+--- /tmp/tmp.MDcya55gkZ/unzipped/flash_attn/flash_attn_triton_amd/bwd_prefill_fused_no_atomics.py	2025-07-31 14:52:16.000000000 +1000
++++ flash_attn/flash_attn_triton_amd/bwd_prefill_fused_no_atomics.py	2025-08-01 02:06:29.821676000 +1000
+@@ -103,7 +103,7 @@
+ @triton.autotune(
+     configs=preprocess_autotune_configs,
+     key=preprocess_autotune_keys,
+-    use_cuda_graph=True,
++    #  use_cuda_graph=True,
+ )
+ @triton.jit
+ def _bwd_preprocess(
+@@ -457,7 +457,7 @@
+ @triton.autotune(
+     configs=causal_autotune_configs,
+     key=causal_autotune_keys,
+-    use_cuda_graph=True,
++    #  use_cuda_graph=True,
+ )
+ @triton.jit
+ def bwd_kernel_causal( # grid = (nheads_k, tl.cdiv(max_seqlen_q // BLOCK_M2), batch)
+@@ -818,7 +818,7 @@
+ @triton.autotune(
+     configs=noncausal_autotune_configs,
+     key=noncausal_autotune_keys,
+-    use_cuda_graph=True,
++    #  use_cuda_graph=True,
+ )
+ @triton.jit
+ def bwd_kernel_noncausal(
+diff -ru --ignore-trailing-space /tmp/tmp.MDcya55gkZ/unzipped/flash_attn/flash_attn_triton_amd/fwd_decode.py flash_attn/flash_attn_triton_amd/fwd_decode.py
+--- /tmp/tmp.MDcya55gkZ/unzipped/flash_attn/flash_attn_triton_amd/fwd_decode.py	2025-07-31 14:52:16.000000000 +1000
++++ flash_attn/flash_attn_triton_amd/fwd_decode.py	2025-08-01 04:33:09.091073900 +1000
+@@ -2,45 +2,54 @@
+ import triton
+ import triton.language as tl
+ from typing import Literal, Optional, Union
+-from .utils import AUTOTUNE, get_padded_headsize, get_shape_and_strides_from_layout, is_cdna
++from .utils import AUTOTUNE, get_padded_headsize, get_shape_and_strides_from_layout, is_cdna, is_rdna
+ 
+ DEBUG = False
+ 
+ def get_cdna_autotune_configs():
+     return [
+-        triton.Config({'BLOCK_M': 128, 'BLOCK_N': 128, 'waves_per_eu': 2, 'PRE_LOAD_V': False}, num_stages=1,
+-                      num_warps=4),
+-        triton.Config({'BLOCK_M': 128, 'BLOCK_N': 64, 'waves_per_eu': 2, 'PRE_LOAD_V': False}, num_stages=1,
+-                      num_warps=4),
+-        triton.Config({'BLOCK_M': 128, 'BLOCK_N': 64, 'waves_per_eu': 3, 'PRE_LOAD_V': False}, num_stages=1,
+-                      num_warps=4),
+-        triton.Config({'BLOCK_M': 128, 'BLOCK_N': 64, 'waves_per_eu': 1, 'PRE_LOAD_V': False}, num_stages=1,
+-                      num_warps=4),
+-        triton.Config({'BLOCK_M': 128, 'BLOCK_N': 32, 'waves_per_eu': 2, 'PRE_LOAD_V': False}, num_stages=1,
+-                      num_warps=4),
+-        triton.Config({'BLOCK_M': 64, 'BLOCK_N': 64, 'waves_per_eu': 1, 'PRE_LOAD_V': False}, num_stages=1,
+-                      num_warps=4),
++        triton.Config({'BLOCK_M': 128, 'BLOCK_N': 128, 'waves_per_eu': 2, 'PRE_LOAD_V': False}, num_stages=1, num_warps=4),
++        triton.Config({'BLOCK_M': 128, 'BLOCK_N': 64,  'waves_per_eu': 2, 'PRE_LOAD_V': False}, num_stages=1, num_warps=4),
++        triton.Config({'BLOCK_M': 128, 'BLOCK_N': 64,  'waves_per_eu': 3, 'PRE_LOAD_V': False}, num_stages=1, num_warps=4),
++        triton.Config({'BLOCK_M': 128, 'BLOCK_N': 64,  'waves_per_eu': 1, 'PRE_LOAD_V': False}, num_stages=1, num_warps=4),
++        triton.Config({'BLOCK_M': 128, 'BLOCK_N': 32,  'waves_per_eu': 2, 'PRE_LOAD_V': False}, num_stages=1, num_warps=4),
++        triton.Config({'BLOCK_M': 64,  'BLOCK_N': 64,  'waves_per_eu': 1, 'PRE_LOAD_V': False}, num_stages=1, num_warps=4),
+         # Fall-back config.
+-        triton.Config({'BLOCK_M': 16, 'BLOCK_N': 16, 'waves_per_eu': 1, 'PRE_LOAD_V': False}, num_stages=1,
+-                      num_warps=4),
++        triton.Config({'BLOCK_M': 16,  'BLOCK_N': 16,  'waves_per_eu': 1, 'PRE_LOAD_V': False}, num_stages=1, num_warps=4),
++    ], ['IS_CAUSAL', 'dropout_p', 'MAX_SEQLENS_Q', 'MAX_SEQLENS_K', 'ACTUAL_BLOCK_DMODEL', 'VARLEN', 'HQ', 'HK']
++
++# best config selected: BLOCK_M: 32, BLOCK_N: 16, waves_per_eu: 2, PRE_LOAD_V: False, num_warps: 2, num_ctas: 1, num_stages: 1, maxnreg: None;
++def get_rdna_autotune_configs():
++    return [
++        triton.Config( {"BLOCK_M": 64, "BLOCK_N": 64, "waves_per_eu": 4, "PRE_LOAD_V": False}, num_stages=1, num_warps=4, ),
++        triton.Config( {"BLOCK_M": 64, "BLOCK_N": 64, "waves_per_eu": 2, "PRE_LOAD_V": False}, num_stages=1, num_warps=4, ),
++        triton.Config( {"BLOCK_M": 64, "BLOCK_N": 64, "waves_per_eu": 1, "PRE_LOAD_V": False}, num_stages=1, num_warps=4, ),
++        triton.Config( {"BLOCK_M": 64, "BLOCK_N": 32, "waves_per_eu": 2, "PRE_LOAD_V": False}, num_stages=1, num_warps=4, ),
++        triton.Config( {"BLOCK_M": 64, "BLOCK_N": 16, "waves_per_eu": 4, "PRE_LOAD_V": False}, num_stages=1, num_warps=4, ),
++        triton.Config( {"BLOCK_M": 32, "BLOCK_N": 32, "waves_per_eu": 4, "PRE_LOAD_V": False}, num_stages=1, num_warps=4, ),
++        triton.Config( {"BLOCK_M": 32, "BLOCK_N": 32, "waves_per_eu": 2, "PRE_LOAD_V": False}, num_stages=1, num_warps=4, ),
++        triton.Config( {"BLOCK_M": 32, "BLOCK_N": 16, "waves_per_eu": 4, "PRE_LOAD_V": False}, num_stages=1, num_warps=4, ),
++        triton.Config( {"BLOCK_M": 32, "BLOCK_N": 16, "waves_per_eu": 2, "PRE_LOAD_V": False}, num_stages=1, num_warps=4, ),
++        triton.Config( {"BLOCK_M": 16, "BLOCK_N": 16, "waves_per_eu": 1, "PRE_LOAD_V": False}, num_stages=1, num_warps=4, ),
+     ], ['IS_CAUSAL', 'dropout_p', 'MAX_SEQLENS_Q', 'MAX_SEQLENS_K', 'ACTUAL_BLOCK_DMODEL', 'VARLEN', 'HQ', 'HK']
+ 
+ def get_autotune_configs():
+     if AUTOTUNE:
+         if is_cdna():
+             autotune_configs, autotune_keys = get_cdna_autotune_configs()
+-            fwd_auto_tune_configs, fwd_autotune_keys= autotune_configs, autotune_keys
++            fwd_auto_tune_configs, fwd_autotune_keys = autotune_configs, autotune_keys
++            reduce_auto_tune_configs, reduce_autotune_keys = autotune_configs, autotune_keys
++            return (fwd_auto_tune_configs, fwd_autotune_keys), (reduce_auto_tune_configs, reduce_autotune_keys)
++        elif is_rdna():
++            autotune_configs, autotune_keys = get_rdna_autotune_configs()
++            fwd_auto_tune_configs, fwd_autotune_keys = autotune_configs, autotune_keys
+             reduce_auto_tune_configs, reduce_autotune_keys = autotune_configs, autotune_keys
+             return (fwd_auto_tune_configs, fwd_autotune_keys), (reduce_auto_tune_configs, reduce_autotune_keys)
+         else:
+             raise ValueError("Unknown Device Type")
+     else:
+         autotune_configs, autotune_keys = [
+-            triton.Config(
+-                {"BLOCK_M": 64, "BLOCK_N": 64, "waves_per_eu": 1, "PRE_LOAD_V": False},
+-                num_stages=1,
+-                num_warps=4,
+-            ),
++            triton.Config( {"BLOCK_M": 64, "BLOCK_N": 64, "waves_per_eu": 1, "PRE_LOAD_V": False}, num_stages=1, num_warps=4, ),
+         ], [
+             "IS_CAUSAL",
+             "dropout_p",
+@@ -52,7 +61,7 @@
+             "HK",
+         ]
+ 
+-        fwd_auto_tune_configs, fwd_autotune_keys= autotune_configs, autotune_keys
++        fwd_auto_tune_configs, fwd_autotune_keys = autotune_configs, autotune_keys
+         reduce_auto_tune_configs, reduce_autotune_keys = autotune_configs, autotune_keys
+         return (fwd_auto_tune_configs, fwd_autotune_keys), (reduce_auto_tune_configs, reduce_autotune_keys)
+ 
+diff -ru --ignore-trailing-space /tmp/tmp.MDcya55gkZ/unzipped/flash_attn/flash_attn_triton_amd/fwd_prefill.py flash_attn/flash_attn_triton_amd/fwd_prefill.py
+--- /tmp/tmp.MDcya55gkZ/unzipped/flash_attn/flash_attn_triton_amd/fwd_prefill.py	2025-07-31 14:52:16.000000000 +1000
++++ flash_attn/flash_attn_triton_amd/fwd_prefill.py	2025-08-01 02:05:42.591025400 +1000
+@@ -511,7 +511,7 @@
+ @triton.autotune(
+     configs=fwd_prefill_autotune_configs,
+     key=fwd_prefill_autotune_keys,
+-    use_cuda_graph=True,
++    #  use_cuda_graph=True,
+ )
+ @triton.jit
+ def attn_fwd(Q, K, V, bias,
+diff -ru --ignore-trailing-space /tmp/tmp.MDcya55gkZ/unzipped/flash_attn/flash_attn_triton_amd/utils.py flash_attn/flash_attn_triton_amd/utils.py
+--- /tmp/tmp.MDcya55gkZ/unzipped/flash_attn/flash_attn_triton_amd/utils.py	2025-07-31 14:52:16.000000000 +1000
++++ flash_attn/flash_attn_triton_amd/utils.py	2025-08-01 02:32:26.657098400 +1000
+@@ -1087,6 +1087,9 @@
+     ], ['IS_CAUSAL', 'dropout_p', 'MAX_SEQLENS_Q', 'MAX_SEQLENS_K', 'ACTUAL_BLOCK_DMODEL', 'IS_VARLEN', 'HQ', 'HK']
+ 
+ 
++# best config selected: BLOCK_M: 32, BLOCK_N: 16, waves_per_eu: 2, PRE_LOAD_V: False, num_warps: 2, num_ctas: 1, num_stages: 1, maxnreg: None;
++# best config selected: BLOCK_M: 32, BLOCK_N: 32, waves_per_eu: 4, PRE_LOAD_V: False, num_warps: 2, num_ctas: 1, num_stages: 1, maxnreg: None;
++# best config selected: BLOCK_M: 32, BLOCK_N: 32, waves_per_eu: 4, PRE_LOAD_V: False, num_warps: 2, num_ctas: 1, num_stages: 1, maxnreg: None;
+ def get_fwd_prefill_rdna_autotune_configs():
+     return [
+         triton.Config({'BLOCK_M': 32, 'BLOCK_N': 32, 'waves_per_eu': 4, 'PRE_LOAD_V': False}, num_stages=1,
+@@ -1162,12 +1165,13 @@
+ 
+ @functools.cache
+ def is_cdna():
+-    return is_hip() and get_arch() in ('gfx908', 'gfx90a', 'gfx940', 'gfx941', 'gfx942', 'gfx950')
++    return is_hip() and get_arch().startswith("gfx9")
+ 
+ @functools.cache
+ def is_rdna():
+-    return is_hip() and get_arch() in ("gfx1030", "gfx1100", "gfx1101", "gfx1102", "gfx1200", "gfx1201")
++    return is_hip() and get_arch().startswith("gfx1")
+ 
+ @functools.cache
+ def arch_supports_fp8():
+-    return is_hip() and get_arch() in ('gfx942')
++    return is_hip() and get_arch().startswith(["gfx942", "gfx12"]) # gfx1151?
++
