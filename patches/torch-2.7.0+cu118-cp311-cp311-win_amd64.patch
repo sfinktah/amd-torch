@@ -174,7 +174,7 @@ diff -ru --ignore-trailing-space /tmp/tmp.OOB7NJEiKv/unzipped/torch/_inductor/ut
  
 -    prop = DeviceProperties.create(device)
 +    if arch is None:
-+        print("\033[93m%%% [warn] No TRITON_OVERRIDE_ARCH set — no max_autotune_gemm for you until you set it.\033[0m")
++        print("\033[93m%%% [warn] No TRITON_OVERRIDE_ARCH set - no max_autotune_gemm for you until you set it.\033[0m")
 +        return False
  
 -    # SM logic is not relevant to ROCm gpus
