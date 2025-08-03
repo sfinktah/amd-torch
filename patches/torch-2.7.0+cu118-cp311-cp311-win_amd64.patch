@@ -210,7 +210,7 @@ diff -ru --ignore-trailing-space /tmp/tmp.OOB7NJEiKv/unzipped/torch/_inductor/ut
  
 -    return get_dram_gbps()
 +    if not rv:
-+        print(f"\033[93m%%% [fix] torch::_inductor::utils::get_gpu_dram_gps didn't know your dram speed, set to 20 (gfx1100)\033[0m ✔")
++        print(f"\033[93m%%% [fix] torch::_inductor::utils::get_gpu_dram_gps didn't know your dram speed, set to 20 (gfx1100)\033[0m")
 +        return 20
 +    return rv
  
