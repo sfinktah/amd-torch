@@ -1,7 +1,7 @@
-diff -ru --ignore-trailing-space /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/attn_qk_int8_per_block.py sageattention/attn_qk_int8_per_block.py
---- /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/attn_qk_int8_per_block.py	2024-11-12 02:54:20.000000000 +1100
-+++ sageattention/attn_qk_int8_per_block.py	2025-08-07 01:23:16.643247700 +1000
-@@ -2,6 +2,250 @@
+diff -ru --ignore-trailing-space /tmp/tmp.xtWqWmVq9L/unzipped/sageattention/attn_qk_int8_per_block.py sageattention/attn_qk_int8_per_block.py
+--- /tmp/tmp.xtWqWmVq9L/unzipped/sageattention/attn_qk_int8_per_block.py	2024-11-12 02:54:20.000000000 +1100
++++ sageattention/attn_qk_int8_per_block.py	2025-08-10 17:22:54.569382100 +1000
+@@ -2,6 +2,238 @@
  import triton
  import triton.language as tl
  
@@ -18,6 +18,9 @@ diff -ru --ignore-trailing-space /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/attn
 +#   512x512x129                 best config selected: BLOCK_M: 32, BLOCK_N: 16, STAGE: 1, waves_per_eu: 3, num_warps: 2, num_ctas: 1, num_stages: 1, maxnreg: None;
 +# when original patch limits extends just enough to allow 64x16:
 +#                               best config selected: BLOCK_M: 64, BLOCK_N: 16, STAGE: 1, waves_per_eu: 4, num_warps: 4, num_ctas: 1, num_stages: 1, maxnreg: None;
++#   in quad                     best config selected: BLOCK_M: 64, BLOCK_N: 16, STAGE: 1, waves_per_eu: 4, num_warps: 4, num_ctas: 1, num_stages: 3, maxnreg: None;
++#   in sage w native wan vace   best config selected: BLOCK_M: 64, BLOCK_N: 16, STAGE: 1, waves_per_eu: 3, num_warps: 4, num_ctas: 1, num_stages: 4, maxnreg: None;
++#   in sage w kijai num_s=4     best config selected: BLOCK_M: 64, BLOCK_N: 16, STAGE: 1, waves_per_eu: 4, num_warps: 4, num_ctas: 1, num_stages: 4, maxnreg: None;
 +
 +BLACKLIST_CACHE = None
 +BLACKLIST_MTIME = None
@@ -60,50 +63,35 @@ diff -ru --ignore-trailing-space /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/attn
 +_BM_SIZE = 32 if ARCH.startswith('gfx10') else 64
 +_BN_SIZE = 16
 +
-+BM_SIZE = int(os.environ.get('SAGE_BM_SIZE', _BM_SIZE if ARCH.startswith('gfx10') else 64))
-+BN_SIZE = int(os.environ.get('SAGE_BN_SIZE', _BN_SIZE if ARCH.startswith('gfx10') else 16))
-+
++BM_SIZE = int(os.environ.get('SAGE_BM_SIZE', _BM_SIZE))
++BN_SIZE = int(os.environ.get('SAGE_BN_SIZE', _BN_SIZE))
 +
 +def braceexpandlist(be):
 +    return [int(x) for x in braceexpand(be)]
 +
-+SAGE_ATTENTION_BLOCK_M = braceexpandlist(os.environ.get('SAGE_ATTENTION_BLOCK_M', '32'))
-+SAGE_ATTENTION_BLOCK_N = braceexpandlist(os.environ.get('SAGE_ATTENTION_BLOCK_N', '16'))
++SAGE_ATTENTION_BLOCK_M = braceexpandlist(os.environ.get('SAGE_ATTENTION_BLOCK_M', str(BM_SIZE)))
++SAGE_ATTENTION_BLOCK_N = braceexpandlist(os.environ.get('SAGE_ATTENTION_BLOCK_N', str(BN_SIZE)))
 +SAGE_ATTENTION_NUM_WARPS = braceexpandlist(os.environ.get('SAGE_ATTENTION_NUM_WARPS', '{2,4}'))
-+SAGE_ATTENTION_NUM_STAGES = braceexpandlist(os.environ.get('SAGE_ATTENTION_NUM_STAGES', '1'))
++SAGE_ATTENTION_NUM_STAGES = braceexpandlist(os.environ.get('SAGE_ATTENTION_NUM_STAGES', '{3,4}'))
 +SAGE_ATTENTION_STAGE = braceexpandlist(os.environ.get('SAGE_ATTENTION_STAGE', '1'))
 +SAGE_ATTENTION_WAVES_PER_EU = braceexpandlist(os.environ.get('SAGE_ATTENTION_WAVES_PER_EU', '{3,4}'))
 +
-+print(f"\033[93m[debug] sage-attn.attn_qk_int8_per_block: SAGE_ATTENTION_NUM_WARPS: {SAGE_ATTENTION_NUM_WARPS}\033[0m")
-+print(f"\033[93m[debug] sage-attn.attn_qk_int8_per_block: SAGE_ATTENTION_BLOCK_M: {SAGE_ATTENTION_BLOCK_N}\033[0m")
-+print(f"\033[93m[debug] sage-attn.attn_qk_int8_per_block: BM_SIZE {BM_SIZE}\033[0m")
-+print(f"\033[93m[debug] sage-attn.attn_qk_int8_per_block: BN_SIZE {BN_SIZE}\033[0m")
++# DEBUG
++#  print(f"\033[93m[debug] sage-attn.attn_qk_int8_per_block: SAGE_ATTENTION_NUM_WARPS: {SAGE_ATTENTION_NUM_WARPS}\033[0m")
++#  print(f"\033[93m[debug] sage-attn.attn_qk_int8_per_block: SAGE_ATTENTION_BLOCK_M: {SAGE_ATTENTION_BLOCK_N}\033[0m")
++#  print(f"\033[93m[debug] sage-attn.attn_qk_int8_per_block: BM_SIZE {BM_SIZE}\033[0m")
++#  print(f"\033[93m[debug] sage-attn.attn_qk_int8_per_block: BN_SIZE {BN_SIZE}\033[0m")
++#  print(f"\033[93m[debug] sage-attn.attn_qk_int8_per_block.configs: DEVICE: {DEVICE}, IS_HIP: {IS_HIP}, ARCH: {ARCH}, LDS: {SHM_LIMIT}\033[0m")
 +
-+
-+
-+
-+# Use something like this to get those SAGE_ATTENTION_BLOCK_M environment variables
-+#
-+# AUTOTUNE = os.environ.get('FLASH_ATTENTION_TRITON_AMD_AUTOTUNE', '0').lower() in ('1', 'true', 'yes')
-+# DEBUG = os.environ.get(   'FLASH_ATTENTION_TRITON_AMD_DEBUG', '0').lower() in ('1', 'true', 'yes')
-+# PERF = os.environ.get(    'FLASH_ATTENTION_TRITON_AMD_PERF', '0').lower() in ('1', 'true', 'yes')
-+
-+print(f"\033[93m[debug] sage-attn.attn_qk_int8_per_block.configs: DEVICE: {DEVICE}, IS_HIP: {IS_HIP}, ARCH: {ARCH}, LDS: {SHM_LIMIT}\033[0m")
 +# Autotune Here
 +configs = [
 +        triton.Config({'BLOCK_M': BM, 'BLOCK_N': BN, 'STAGE':S, 'waves_per_eu':wpe}, num_warps=nw, num_stages=ns) \
-+    #  for BM in [32, 64]\
-+    #  for BN in [16, 32, 64]\
-+    #  for nw in[2, 4, 8]\
-+    #  for ns in [1, 2, 3, 4]\
-+    #  for S in [1]\
-+    #  for wpe in [3, 4]
-+    for BM in  SAGE_ATTENTION_BLOCK_M\
-+    for BN in  SAGE_ATTENTION_BLOCK_N\
-+    for nw in  SAGE_ATTENTION_NUM_WARPS\
-+    for ns in  SAGE_ATTENTION_NUM_STAGES\
-+    for S in   SAGE_ATTENTION_STAGE\
-+    for wpe in SAGE_ATTENTION_WAVES_PER_EU
++                for BM in  SAGE_ATTENTION_BLOCK_M    \
++                for BN in  SAGE_ATTENTION_BLOCK_N    \
++                for nw in  SAGE_ATTENTION_NUM_WARPS  \
++                for ns in  SAGE_ATTENTION_NUM_STAGES \
++                for S in   SAGE_ATTENTION_STAGE      \
++                for wpe in SAGE_ATTENTION_WAVES_PER_EU
 +]
 +#  Selected config for my gfx1100 is always:
 +#      BLOCK_M: 64, BLOCK_N: 16, STAGE: 1, waves_per_eu: 4, num_warps: 4, num_ctas: 1, num_stages: 3 or 4, maxnreg: None;
@@ -204,7 +192,7 @@ diff -ru --ignore-trailing-space /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/attn
 +            print(f"\033[93m[debug] sage-attn: [SKIP]     {conf_str()}     reason: BLOCK_AREA >= 1024 and num_warps < 4\033[0m")
 +            return False
 +    else:
-+        # my gfx1100 always picks 4 warps
++        # my gfx1100 always picks 4 warps on 64x16, 2 warps on 32x16
 +        if conf.num_warps > 2:
 +            print(f"\033[93m[debug] sage-attn: [SKIP]     {conf_str()}     reason: BLOCK_AREA < 1024 and num_warps > 2\033[0m")
 +            return False
@@ -252,7 +240,7 @@ diff -ru --ignore-trailing-space /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/attn
  @triton.jit
  def _attn_fwd_inner(acc, l_i, m_i, q, q_scale, kv_len,
                      K_ptrs, K_scale_ptr, V_ptrs, stride_kn, stride_vn, 
-@@ -36,6 +280,10 @@
+@@ -36,6 +268,10 @@
          V_ptrs += BLOCK_N * stride_vn
      return acc, l_i
  
@@ -263,7 +251,7 @@ diff -ru --ignore-trailing-space /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/attn
  @triton.jit
  def _attn_fwd(Q, K, V, Q_scale, K_scale, Out,  
                stride_qz, stride_qh, stride_qn,
-@@ -81,8 +329,10 @@
+@@ -81,8 +317,10 @@
      tl.store(O_block_ptr, acc.to(Out.type.element_ty), mask = (offs_m[:, None] < qo_len))
  
  def forward(q, k, v, q_scale, k_scale, tensor_layout="HND", output_dtype=torch.float16):
@@ -276,7 +264,7 @@ diff -ru --ignore-trailing-space /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/attn
      stage = 1
  
      o = torch.empty(q.shape, dtype=output_dtype, device=q.device)
-@@ -109,7 +359,7 @@
+@@ -109,7 +347,7 @@
      HEAD_DIM_K = head_dim
      num_kv_groups = h_qo // h_kv
  
@@ -285,7 +273,7 @@ diff -ru --ignore-trailing-space /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/attn
      _attn_fwd[grid](
          q, k, v, q_scale, k_scale, o,  
          stride_bz_q, stride_h_q, stride_seq_q, 
-@@ -118,8 +368,6 @@
+@@ -118,8 +356,6 @@
          stride_bz_o, stride_h_o, stride_seq_o,
          qo_len, kv_len,
          h_qo, num_kv_groups,
@@ -297,9 +285,9 @@ diff -ru --ignore-trailing-space /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/attn
 +        )
      return o
 \ No newline at end of file
-diff -ru --ignore-trailing-space /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/attn_qk_int8_per_block_causal.py sageattention/attn_qk_int8_per_block_causal.py
---- /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/attn_qk_int8_per_block_causal.py	2024-11-12 02:54:20.000000000 +1100
-+++ sageattention/attn_qk_int8_per_block_causal.py	2025-08-06 17:59:47.390253700 +1000
+diff -ru --ignore-trailing-space /tmp/tmp.xtWqWmVq9L/unzipped/sageattention/attn_qk_int8_per_block_causal.py sageattention/attn_qk_int8_per_block_causal.py
+--- /tmp/tmp.xtWqWmVq9L/unzipped/sageattention/attn_qk_int8_per_block_causal.py	2024-11-12 02:54:20.000000000 +1100
++++ sageattention/attn_qk_int8_per_block_causal.py	2025-08-09 05:19:17.268906800 +1000
 @@ -44,7 +44,7 @@
          v = tl.load(V_ptrs, mask = offs_n[:, None] < (kv_len - start_n))
          p = p.to(tl.float16)
@@ -333,9 +321,9 @@ diff -ru --ignore-trailing-space /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/attn
  
      o = torch.empty(q.shape, dtype=output_dtype, device=q.device)
  
-diff -ru --ignore-trailing-space /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/core.py sageattention/core.py
---- /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/core.py	2024-11-20 13:25:52.000000000 +1100
-+++ sageattention/core.py	2025-08-05 00:42:17.366250000 +1000
+diff -ru --ignore-trailing-space /tmp/tmp.xtWqWmVq9L/unzipped/sageattention/core.py sageattention/core.py
+--- /tmp/tmp.xtWqWmVq9L/unzipped/sageattention/core.py	2024-11-20 13:25:52.000000000 +1100
++++ sageattention/core.py	2025-08-07 06:37:21.103920500 +1000
 @@ -79,7 +79,7 @@
      assert q.dtype == k.dtype == v.dtype, "All tensors must have the same dtype."
  
@@ -345,9 +333,9 @@ diff -ru --ignore-trailing-space /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/core
  
      # assert last dim is contiguous
      assert q.stride(-1) == 1 and k.stride(-1) == 1 and v.stride(-1) == 1, "Last dim of qkv must be contiguous."
-diff -ru --ignore-trailing-space /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/quant_per_block.py sageattention/quant_per_block.py
---- /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/quant_per_block.py	2024-11-15 03:34:50.000000000 +1100
-+++ sageattention/quant_per_block.py	2025-08-06 18:22:45.894770500 +1000
+diff -ru --ignore-trailing-space /tmp/tmp.xtWqWmVq9L/unzipped/sageattention/quant_per_block.py sageattention/quant_per_block.py
+--- /tmp/tmp.xtWqWmVq9L/unzipped/sageattention/quant_per_block.py	2024-11-15 03:34:50.000000000 +1100
++++ sageattention/quant_per_block.py	2025-08-10 17:17:18.094870300 +1000
 @@ -1,6 +1,7 @@
  import torch
  import triton
@@ -366,8 +354,8 @@ diff -ru --ignore-trailing-space /tmp/tmp.aWqZfoWJmX/unzipped/sageattention/quan
 +_BM_SIZE = 32 if ARCH.startswith('gfx10') else 64
 +_BN_SIZE = 16
 +
-+BM_SIZE = int(os.environ.get('SAGE_BM_SIZE', _BM_SIZE if ARCH.startswith('gfx10') else 64))
-+BN_SIZE = int(os.environ.get('SAGE_BN_SIZE', _BN_SIZE if ARCH.startswith('gfx10') else 16))
++BM_SIZE = int(os.environ.get('SAGE_BM_SIZE', _BM_SIZE))
++BN_SIZE = int(os.environ.get('SAGE_BN_SIZE', _BN_SIZE))
 +
 +print(f"\033[93m[debug] sage-attn.quant_per_block: BM_SIZE {BM_SIZE}\033[0m")
 +print(f"\033[93m[debug] sage-attn.quant_per_block: BN_SIZE {BN_SIZE}\033[0m")
