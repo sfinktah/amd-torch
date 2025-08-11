@@ -1,0 +1,37 @@
+name: Generate patch index
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate patches/index.txt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p patches
+          # List .patch files in patches directory (non-recursive), output basenames, sorted
+          find patches -maxdepth 1 -type f -name '*.patch' -printf '%f\n' | sort > patches/index.txt
+
+      - name: Commit index if changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- patches/index.txt; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add patches/index.txt
+          git commit -m "chore: update patches/index.txt [skip ci]"
+          git push
