@@ -26,12 +26,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- patches/index.txt; then
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          # Stage the file so both new and modified cases are detected
+          git add patches/index.txt
+          # If nothing is staged, there are no changes to commit
+          if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
           fi
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config user.name "github-actions[bot]"
-          git add patches/index.txt
           git commit -m "chore: update patches/index.txt [skip ci]"
           git push
