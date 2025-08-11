@@ -22,18 +22,26 @@ jobs:
           # List .patch files in patches directory (non-recursive), output basenames, sorted
           find patches -maxdepth 1 -type f -name '*.patch' -printf '%f\n' | sort > patches/index.txt
 
+      - name: Generate packages/index.txt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p packages
+          # List .whl files in packages directory (non-recursive), output basenames, sorted
+          find packages -maxdepth 1 -type f -name '*.whl' -printf '%f\n' | sort > packages/index.txt
+
       - name: Commit index if changed
         shell: bash
         run: |
           set -euo pipefail
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config user.name "github-actions[bot]"
-          # Stage the file so both new and modified cases are detected
-          git add patches/index.txt
+          # Stage the files so both new and modified cases are detected
+          git add patches/index.txt packages/index.txt
           # If nothing is staged, there are no changes to commit
           if git diff --cached --quiet; then
             echo "No changes to commit."
             exit 0
           fi
-          git commit -m "chore: update patches/index.txt [skip ci]"
+          git commit -m "chore: update patch/package indexes [skip ci]"
           git push
