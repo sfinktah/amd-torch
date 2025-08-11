@@ -1,0 +1,7 @@
+flash_attn-2.8.1+triton_amd_git2df1727-py3-none-any.patch
+sageattention-1.0.6+sfinktah+env-py3-none-any.patch
+sageattention-1.0.6-py3-none-any.patch
+torch-2.7.0+cu118-cp311-cp311-win_amd64.patch
+torch-2.8.0.dev20250610+cu118-cp311-cp311-win_amd64.patch
+triton-3.4.0+gita9c80202-cp311-cp311-win_amd64.patch
+utf-8.patch
