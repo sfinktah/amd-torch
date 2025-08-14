@@ -672,13 +672,13 @@
           "hidden": true,
           "paused": false,
           "params": {
-            "filename": "concrete-emo_00328.mp4",
+            "filename": "concrete-emo_00331.mp4",
             "subfolder": "Wan22\\int",
             "type": "output",
             "format": "video/h264-mp4",
             "frame_rate": 30,
-            "workflow": "concrete-emo_00328.png",
-            "fullpath": "C:\\zluda\\comfyui-n\\output\\Wan22\\int\\concrete-emo_00328.mp4"
+            "workflow": "concrete-emo_00331.png",
+            "fullpath": "C:\\zluda\\comfy-fast\\output\\Wan22\\int\\concrete-emo_00331.mp4"
           },
           "muted": true
         }
@@ -1331,8 +1331,7 @@
         "0, 0, 0",
         "left",
         16,
-        "cpu",
-        "<tr><td>Output: </td><td><b>1</b> x <b>512</b> x <b>736 | 4.31MB</b></td></tr>"
+        "cpu"
       ]
     },
     {
@@ -2141,8 +2140,7 @@
         "0, 0, 0",
         "top",
         16,
-        "cpu",
-        "<tr><td>Output: </td><td><b>1</b> x <b>512</b> x <b>512 | 3.00MB</b></td></tr>"
+        "cpu"
       ]
     },
     {
@@ -2504,29 +2502,6 @@
       ]
     },
     {
-      "id": 139,
-      "type": "MarkdownNote",
-      "pos": [
-        -1500,
-        -1500
-      ],
-      "size": [
-        1480,
-        88
-      ],
-      "flags": {},
-      "order": 18,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [],
-      "properties": {},
-      "widgets_values": [
-        "# Yes, I realise this a rediculously long image loading process, but I'm not holding a gun to your head or anything.\n"
-      ],
-      "color": "#432",
-      "bgcolor": "#653"
-    },
-    {
       "id": 140,
       "type": "Note",
       "pos": [
@@ -2538,7 +2513,7 @@
         120
       ],
       "flags": {},
-      "order": 19,
+      "order": 18,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -2561,7 +2536,7 @@
         100
       ],
       "flags": {},
-      "order": 20,
+      "order": 19,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -2584,7 +2559,7 @@
         100
       ],
       "flags": {},
-      "order": 21,
+      "order": 20,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -2607,7 +2582,7 @@
         88
       ],
       "flags": {},
-      "order": 22,
+      "order": 21,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -2683,7 +2658,7 @@
         120
       ],
       "flags": {},
-      "order": 23,
+      "order": 22,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -2706,7 +2681,7 @@
         100
       ],
       "flags": {},
-      "order": 24,
+      "order": 23,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -2729,7 +2704,7 @@
         140
       ],
       "flags": {},
-      "order": 25,
+      "order": 24,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -2831,13 +2806,36 @@
         120
       ],
       "flags": {},
-      "order": 26,
+      "order": 25,
       "mode": 0,
       "inputs": [],
       "outputs": [],
       "properties": {},
       "widgets_values": [
         "Why does everyone just blindly use 16 fps?  Does the world need more 32 fps interpolate video?  I just use 15, then interpolate to 30.  It makes the video slightly longer and doesn't give you non-standard frame rates."
+      ],
+      "color": "#432",
+      "bgcolor": "#653"
+    },
+    {
+      "id": 139,
+      "type": "MarkdownNote",
+      "pos": [
+        -1500,
+        -1500
+      ],
+      "size": [
+        1480,
+        88
+      ],
+      "flags": {},
+      "order": 26,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [],
+      "properties": {},
+      "widgets_values": [
+        "# Yes, I realise this a rediculously long image loading process, but I'm not holding a gun to your head or anything.\n## Also, the input image can be downloaded [here](https://github.com/sfinktah/amd-torch/blob/main/input/concrete-emo-bench.png)"
       ],
       "color": "#432",
       "bgcolor": "#653"
@@ -4058,10 +4056,10 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.19737424339932128,
+      "scale": 0.7495283608451044,
       "offset": [
-        3895.9937388052595,
-        2459.3180135091147
+        1977.5055272321974,
+        1773.0873360503176
       ]
     },
     "frontendVersion": "1.24.4",
@@ -4138,7 +4136,20 @@
             130,
             131,
             132,
-            133
+            133,
+            134,
+            135,
+            136,
+            138,
+            139,
+            140,
+            141,
+            142,
+            143,
+            144,
+            145,
+            147,
+            148
           ],
           "advanced": false,
           "groups": [
@@ -4222,7 +4233,20 @@
         130,
         131,
         132,
-        133
+        133,
+        134,
+        135,
+        136,
+        138,
+        139,
+        140,
+        141,
+        142,
+        143,
+        144,
+        145,
+        147,
+        148
       ]
     }
   },
