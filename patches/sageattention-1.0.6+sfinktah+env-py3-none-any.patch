@@ -72,7 +72,7 @@ diff -ru --ignore-trailing-space /tmp/tmp.xtWqWmVq9L/unzipped/sageattention/attn
 +SAGE_ATTENTION_BLOCK_M = braceexpandlist(os.environ.get('SAGE_ATTENTION_BLOCK_M', str(BM_SIZE)))
 +SAGE_ATTENTION_BLOCK_N = braceexpandlist(os.environ.get('SAGE_ATTENTION_BLOCK_N', str(BN_SIZE)))
 +SAGE_ATTENTION_NUM_WARPS = braceexpandlist(os.environ.get('SAGE_ATTENTION_NUM_WARPS', '{2,4}'))
-+SAGE_ATTENTION_NUM_STAGES = braceexpandlist(os.environ.get('SAGE_ATTENTION_NUM_STAGES', '{3,4}'))
++SAGE_ATTENTION_NUM_STAGES = braceexpandlist(os.environ.get('SAGE_ATTENTION_NUM_STAGES', '{1,3,4}'))
 +SAGE_ATTENTION_STAGE = braceexpandlist(os.environ.get('SAGE_ATTENTION_STAGE', '1'))
 +SAGE_ATTENTION_WAVES_PER_EU = braceexpandlist(os.environ.get('SAGE_ATTENTION_WAVES_PER_EU', '{3,4}'))
 +
