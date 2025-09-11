@@ -35,6 +35,7 @@ echo  ::  %time:~0,8%  ::  Beginning installation ...
 echo.
 echo  ::  %time:~0,8%  ::  - Installing required packages
 pip install -r requirements.txt --quiet
+pip install "numpy==1.*" --quiet
 rem echo  ::  %time:~0,8%  ::  - Installing onnxruntime (required by some nodes)
 rem pip install onnxruntime --quiet
 
@@ -48,7 +49,7 @@ for /f "tokens=2 delims=." %%a in ('python -c "import sys; print(sys.version)"')
 echo  ::  %time:~0,8%  ::  - Installing torch AMD 
 if "%PY_MINOR%"=="11" (
     echo  ::  %time:~0,8%  ::  - Python 3.11 detected
-    pip install ^
+    pip install --force-reinstall ^
         https://github.com/scottt/rocm-TheRock/releases/download/v6.5.0rc-pytorch-gfx110x/torch-2.7.0a0+rocm_git3f903c3-cp311-cp311-win_amd64.whl ^
         https://github.com/scottt/rocm-TheRock/releases/download/v6.5.0rc-pytorch-gfx110x/torchaudio-2.7.0a0+52638ef-cp311-cp311-win_amd64.whl ^
         https://github.com/scottt/rocm-TheRock/releases/download/v6.5.0rc-pytorch-gfx110x/torchvision-0.22.0+9eb57cd-cp311-cp311-win_amd64.whl
@@ -56,12 +57,12 @@ if "%PY_MINOR%"=="11" (
     pip install --force-reinstall https://github.com/lshqqytiger/triton/releases/download/a9c80202/triton-3.4.0+gita9c80202-cp311-cp311-win_amd64.whl
 ) else if "%PY_MINOR%"=="12" (
     echo  ::  %time:~0,8%  ::  - Python 3.12 detected
-    pip install ^
+    pip install --force-reinstall ^
         https://github.com/scottt/rocm-TheRock/releases/download/v6.5.0rc-pytorch-gfx110x/torch-2.7.0a0+git3f903c3-cp312-cp312-win_amd64.whl ^
         https://github.com/scottt/rocm-TheRock/releases/download/v6.5.0rc-pytorch-gfx110x/torchaudio-2.6.0a0+1a8f621-cp312-cp312-win_amd64.whl ^
         https://github.com/scottt/rocm-TheRock/releases/download/v6.5.0rc-pytorch-gfx110x/torchvision-0.22.0+9eb57cd-cp312-cp312-win_amd64.whl
     echo  ::  %time:~0,8%  ::  - Installing triton AMD
-    pip install --force-reinstall https://github.com/lshqqytiger/triton/releases/download/a9c80202/triton-3.4.0+gita9c80202-cp312-cp312-win_amd64.whl --quiet
+    pip install --force-reinstall https://github.com/lshqqytiger/triton/releases/download/a9c80202/triton-3.4.0+gita9c80202-cp312-cp312-win_amd64.whl
 ) else (
     echo  ::  %time:~0,8%  ::  - WARNING: Unsupported Python version 3.%PY_MINOR%, skipping torch and triton installation
     echo  ::  %time:~0,8%  ::  - Full version string: 
@@ -69,12 +70,13 @@ if "%PY_MINOR%"=="11" (
 )
 
 echo  ::  %time:~0,8%  ::  - Patching torch and triton
-pip install --force-reinstall pypatch-url --quiet
+pip install --upgrade pypatch-url --quiet
 pypatch-url apply https://raw.githubusercontent.com/sfinktah/amd-torch/refs/heads/main/patches/triton-3.4.0+gita9c80202-cp311-cp311-win_amd64.patch -p 4 triton
 pypatch-url apply https://raw.githubusercontent.com/sfinktah/amd-torch/refs/heads/main/patches/torch-2.7.0+cu118-cp311-cp311-win_amd64.patch -p 4 torch
 
 echo  ::  %time:~0,8%  ::  - Installing sageattention
-pip install --force-reinstall sageattention braceexpand --quiet
+pip install braceexpand --quiet
+pip install --force-reinstall sageattention --quiet
 pypatch-url apply https://raw.githubusercontent.com/sfinktah/amd-torch/refs/heads/main/patches/sageattention-1.0.6+sfinktah+env-py3-none-any.patch -p 4 sageattention
 
 :: Step 13: Copy Python libs
@@ -90,9 +92,9 @@ if %ERRLEVEL% neq 0 (
 echo.
 echo  ::  %time:~0,8%  ::  - Installing Comfyui Manager
 cd custom_nodes
-git clone https://github.com/ltdrdata/ComfyUI-Manager.git --quiet
+git clone https://github.com/ltdrdata/ComfyUI-Manager.git --quiet >null 2>&1
 echo  ::  %time:~0,8%  ::  - Installing ComfyUI-deepcache
-git clone https://github.com/styler00dollar/ComfyUI-deepcache.git --quiet
+git clone https://github.com/styler00dollar/ComfyUI-deepcache.git --quiet >null 2>&1
 cd ..
 echo.
 
@@ -187,6 +189,8 @@ if not exist "%HIP_SDK_DIR%\bin\clang.exe" (
         echo HIP SDK not found at %HIP_SDK_DIR%, which is annoying, since we just put it there.
         exit /b 1
     )
+) else (
+    echo HIP SDK already exists at %HIP_SDK_DIR% -- skipping HIP SDK download.
 )
 
 echo  ::  %time:~0,8%  ::  - Performing GPU identification
@@ -229,10 +233,7 @@ if !GPUCOUNT! LSS 1 (
 )
 
 echo  ::  %time:~0,8%  ::  - Detected %TRITON_OVERRIDE_ARCH%
-
-echo  ::  %time:~0,8%  ::  - Writing startup batch file
-
-echo  ::  %time:~0,8%  ::  - Done
+echo  ::  %time:~0,8%  ::  - Done installing, performing test launch
 echo. 
 set "endTime=%time: =0%"
 set "end=!endTime:%time:~8,1%=%%100)*100+1!"  &  set "start=!startTime:%time:~8,1%=%%100)*100+1!"
