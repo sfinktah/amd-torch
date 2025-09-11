@@ -98,7 +98,7 @@ echo.
 
 echo  ::  %time:~0,8%  ::  - Installing HIP SDK 6.5
 :: Step 13b: Check if HIP SDK exists, otherwise download and extract it
-set HIP_ZIP_PATH=~dp0
+set HIP_ZIP_PATH=%~dp0
 set "HIP_SDK_PARENT=%HIP_SDK_DIR%"
 for %%A in ("%HIP_SDK_PARENT%\.") do set "HIP_SDK_PARENT=%%~dpA"
 if "%HIP_SDK_PARENT:~-1%"=="\" set "HIP_SDK_PARENT=%HIP_SDK_PARENT:~0,-1%"
