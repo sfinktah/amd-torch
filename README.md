@@ -144,7 +144,7 @@ If that doesnt work, scream into a bucket.
 
 Get Git from [git-scm.com/downloads/win](https://git-scm.com/downloads/win). Default install is fine.
 
-If you're using Chocolatey (spelling: correct), run:
+If you're using Chocolatey, run:
 
 ```cmd
 choco install git -y
