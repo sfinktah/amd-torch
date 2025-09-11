@@ -243,4 +243,4 @@ echo *** Installation is completed in %hh:~1%%time:~2,1%%mm:~1%%time:~2,1%%ss:~1
 echo ..................................................... 
 echo.
 echo.
-python main.py --auto-launch --use-pytorch-cross-attention
+python main.py --auto-launch --use-sage-attention
