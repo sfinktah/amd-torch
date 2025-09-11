@@ -42,6 +42,14 @@ set MIOPEN_FIND_MODE=2
 set MIOPEN_LOG_LEVEL=3
 set PYTORCH_TUNABLEOP_ENABLED=1
 set MIOPEN_FIND_MODE=FAST
+set SAGE_BM_SIZE=32
+set SAGE_BN_SIZE=16
+set SAGE_ATTENTION_BLOCK_M=32
+set SAGE_ATTENTION_BLOCK_N=16
+set SAGE_ATTENTION_NUM_WARPS={2,4}
+set SAGE_ATTENTION_NUM_STAGES=1
+set SAGE_ATTENTION_WAVES_PER_EU={3,4}
+
 
 :: Enabling this will cause rocm's amd triton flash-attn to look for CDNA optimisations (we have RDNA, so it will fail -- unless we patch flash attention of course :)
 :: TODO - include flash-attention with patches
