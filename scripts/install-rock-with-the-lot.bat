@@ -76,7 +76,7 @@ pypatch-url apply https://raw.githubusercontent.com/sfinktah/amd-torch/refs/head
 
 echo  ::  %time:~0,8%  ::  - Installing sageattention
 pip install braceexpand --quiet
-pip install --force-reinstall sageattention --quiet
+pip install --force-reinstall sageattention==1.0.6 --quiet
 pypatch-url apply https://raw.githubusercontent.com/sfinktah/amd-torch/refs/heads/main/patches/sageattention-1.0.6+sfinktah+env-py3-none-any.patch -p 4 sageattention
 
 :: Step 13: Copy Python libs

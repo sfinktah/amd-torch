@@ -1,0 +1,72 @@
+From https://github.com/alexsarmiento in https://github.com/patientx/ComfyUI-Zluda/issues/170#issuecomment-3288702825
+
+https://github.com/ROCm/TheRock/actions/runs/17692564148/job/50288053361
+
+The first semi-official and functional pytorch wheels builds from TheRock are popping up, with aotriton 0.11 flash attention kernel built-in.
+
+According to my initial testing with gfx1100, these aotriton pytorch v2.10 wheels are as fast as the older scott's pytorch v2.7 wheels + aotriton+ triton + sage attention. This further simplifies the installation of pytorch on windows for AMD.
+
+To enable aotriton however the env variable must be set first  TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL = "1"
+
+More testing is of course to come. So I found the first negative which is the fact I can't make torch compile to work. Triton is still required for this, so I am not sure if the problem lies with pytorch or lee's triton wheels. Not a very significant problem but still annoying
+
+--
+
+https://github.com/ROCm/TheRock/blob/main/RELEASES.md
+
+You can for instance just do
+python -m pip install  --index-url https://rocm.nightlies.amd.com/v2/gfx110X-dgpu/  "rocm[libraries,devel]"   --pre torch torchaudio torchvision
+
+from the virtual environment. Activate aotriton with TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL = "1"  environment variable. That's it, an ordinary pip installation. This installs rocm7 wheels alongside pytorch!
+
+But as I said, I can't make torch compile to work with lee's triton (cpu tensor?). Can you try torch compile with these wheels?. Maybe you can figure it out. You would need to set these environment variables first:
+
+$env:TORCH_ROCM_AOTRITON_ENABLE_EXPERIMENTAL = "1"
+$env:HIP_PATH = $(rocm-sdk.exe path --root)
+$env:TRITON_LIBHIP_PATH = $env:HIP_PATH + "/lib"
+$env:TRITON_HIP_LLD_PATH = $env:HIP_PATH + "/lib/llvm/bin/lld-link.exe"
+$env:PATH += ";" + $env:HIP_PATH + "/lib/llvm/bin"
+Also, VAE decoding seems very slow for some reason in the first run. So, it might not be enough for some people to switch from Zluda or the older scott's wheels. (also always run comfyui with --disable-smart-memory while using these wheels!)
+
+--
+
+Note from me: ComfyUI is currently disabling cuDNN for all AMD GPUs.
+
+--
+
+From https://github.com/pw405 in https://github.com/patientx/ComfyUI-Zluda/issues/170#issuecomment-3339843904
+
+I saw AMD posting about native Pytorch with ROCm 6.4.4. for RX 7000 & 9000 series. There is a special preview driver available for:
+https://www.amd.com/en/resources/support-articles/release-notes/RN-AMDGPU-WINDOWS-PYTORCH-PREVIEW.html
+
+They also posted a setup guide for LLM's as a part of it:
+https://gpuopen.com/learn/pytorch-windows-amd-llm-guide/
+
+Will this finally be the missing piece to run native Pytorch on Radeon??
+
+
+--
+From: https://repo.radeon.com/rocm/windows/rocm-rel-6.4.4/
+
+https://rocm.docs.amd.com/en/latest/
+https://www.amd.com/en/support/download/linux-drivers.html
+https://repo.radeon.com/rocm/windows/rocm-rel-6.4.4/torch/
+https://repo.radeon.com/rocm/windows/rocm-rel-6.4.4/torchaudio/
+https://repo.radeon.com/rocm/windows/rocm-rel-6.4.4/torchvision/
+
+--
+From: https://gpuopen.com/learn/pytorch-windows-amd-llm-guide/
+
+https://www.python.org/downloads/release/python-3120/
+i
+pip install --no-cache-dir https://repo.radeon.com/rocm/windows/rocm-rel-6.4.4/torch-2.8.0a0%2Bgitfc14c65-cp312-cp312-win_amd64.whl
+pip install --no-cache-dir https://repo.radeon.com/rocm/windows/rocm-rel-6.4.4/torchaudio-2.6.0a0%2B1a8f621-cp312-cp312-win_amd64.whl
+pip install --no-cache-dir https://repo.radeon.com/rocm/windows/rocm-rel-6.4.4/torchvision-0.24.0a0%2Bc85f008-cp312-cp312-win_amd64.whl
+pip install transformers accelerate
+
+--
+From: https://rocm.docs.amd.com/projects/radeon-ryzen/en/latest/docs/install/installrad/windows/install-pytorch.html
+
+pip install --no-cache-dir https://repo.radeon.com/rocm/windows/rocm-rel-6.4.4/torch-2.8.0a0%2Bgitfc14c65-cp312-cp312-win_amd64.whl
+pip install --no-cache-dir https://repo.radeon.com/rocm/windows/rocm-rel-6.4.4/torchaudio-2.6.0a0%2B1a8f621-cp312-cp312-win_amd64.whl
+pip install --no-cache-dir https://repo.radeon.com/rocm/windows/rocm-rel-6.4.4/torchvision-0.24.0a0%2Bc85f008-cp312-cp312-win_amd64.whl
